@@ -2,11 +2,10 @@ from asyncio import run, start_server, StreamReader, StreamWriter
 from collections import namedtuple
 from json import dumps, JSONDecodeError, loads
 
-from socket import *
-
 
 HOST = ''
 PORT = 2077
+
 
 Message = namedtuple('Message', ('who', 'n', 'text'))
 
@@ -64,8 +63,15 @@ def form_no_field_in_request_error_response(field: str) -> dict:
 
 
 async def handle_connection(reader: StreamReader, writer: StreamWriter):
+    # print(writer.get_extra_info('peername'))
     data = await reader.read(-1)
+
+    # print(data.decode())
+
     response = handle_request(data)
+
+    a = dumps(response)
+    # print(a)
 
     writer.write(dumps(response).encode())
     await writer.drain()
@@ -116,7 +122,17 @@ def retrieve_messages(request: dict) -> dict:
             response = {
                 'status': 'ok',
                 'timeout': 1000,
-                'messages': sorted(filter(lambda m: m.n > n, data['messages']), key=lambda m: m.n)
+                'messages': sorted(
+                    map(
+                        lambda m: m._asdict(),
+                        filter(
+                            lambda m: m.n > n,
+                            data['messages']
+                        )
+                    ),
+                    key=lambda m: m['n']
+                )
+                #'messages': [{'who': 'nickname', 'n': 1, 'text': 'some text'}]
             }
     except KeyError:
         response = form_no_field_in_request_error_response('last')
@@ -153,4 +169,5 @@ async def main():
         await server.serve_forever()
 
 
-run(main())
+if __name__ == '__main__':
+    run(main())
