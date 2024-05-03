@@ -63,15 +63,16 @@ def form_no_field_in_request_error_response(field: str) -> dict:
 
 
 async def handle_connection(reader: StreamReader, writer: StreamWriter):
-    # print(writer.get_extra_info('peername'))
+    peer = writer.get_extra_info('peername')
+    print(f'{peer} connected')
     data = await reader.read(-1)
 
-    # print(data.decode())
+    print(f'{peer}: {data.decode()}')
 
     response = handle_request(data)
 
     a = dumps(response)
-    # print(a)
+    print(f"Responding to {peer} with '{a}'")
 
     writer.write(dumps(response).encode())
     await writer.drain()
